@@ -52,7 +52,11 @@
     [super removeFromSuperview];
 }
 
-
+/**
+ *  设置音量
+ *
+ *  @param volumn 音量
+ */
 
 - (void)setVolumn:(float)volumn{
     //3-11
@@ -68,6 +72,10 @@
     }
 }
 
+/**
+ *  完成录音
+ */
+
 - (void)finishRecorder{
     _state = StateOfWaiting;
     if (_timer) {
@@ -76,6 +84,11 @@
     [self setText:@"识别中..."];
     _timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(timeUp) userInfo:nil repeats:YES];
 }
+
+/**
+ *  计时器
+ */
+
 - (void)timeUp{
     if (_state == StateOfSpeaking) {
         if (_volumn == 3 && _nowVolumn <5) {
@@ -103,6 +116,13 @@
         [_button setImage:[UIImage imageNamed:[NSString stringWithFormat:@"voice_wait%03d.png", _waitImageIndex]] forState:UIControlStateNormal];
     }
 }
+
+/**
+ *  添加结果试图
+ *
+ *  @param text 结果
+ */
+
 - (void)setText:(NSString *)text{
 
     [_textView removeFromSuperview];
@@ -120,6 +140,12 @@
     [self addSubview:_textView];
 }
 
+/**
+ *  设置结果
+ *
+ *  @param text 结果
+ */
+
 - (void)setResultText:(NSString *)text{
     _state = StateOfReady;
     [_timer invalidate];
@@ -133,7 +159,11 @@
     _resultTF.text=text;
 }
 
-
+/**
+ *  设置错误代码
+ *
+ *  @param errorCode 错误代码
+ */
 - (void)setErrorCode:(NSInteger)errorCode{
     _state = StateOfReady;
     [_timer invalidate];
@@ -148,6 +178,11 @@
         [self setResultText:[NSString stringWithFormat:@"ErrorCode = %d\n点击重新开始", errorCode]];
     }
 }
+
+/**
+ *  取消录制
+ */
+
 - (void)didCancel{
     _state = StateOfReady;
     [_timer invalidate];
@@ -164,7 +199,13 @@
     
 }
 
-
+/**
+ *  初始化视图
+ *
+ *  @param frame 边框
+ *
+ *  @return 视图
+ */
 - (id)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
@@ -249,12 +290,28 @@
 }
 
 #pragma **********tableViewdalegate*************
-
+/**
+ *  每个section中有多少行cell
+ *
+ *  @param tableView <#tableView description#>
+ *  @param section   <#section description#>
+ *
+ *  @return <#return value description#>
+ */
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
 
     return 10;
 
 }
+
+/**
+ *  绘制cell
+ *
+ *  @param tableView 所在的tableview
+ *  @param indexPath 第几个cell
+ *
+ *  @return cell
+ */
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -291,10 +348,20 @@
 
 #pragma *********GCDAsyncSocketDelehate**********
 
+/**
+ *  socket连接
+ *
+ *  @param sock socket对象
+ *  @param host 主机
+ *  @param port 端口
+ */
+
 - (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port{
 
     
 }
+
+
 
 - (void)clickedButton:(UIButton *)btn{
     if (btn == _reSetButton) {
@@ -338,6 +405,12 @@
     // Drawing code
 }
 */
+
+/**
+ *  中文字符串转数字
+ *
+ *  @param text <#text description#>
+ */
 
 - (void) resultStringtoDigit:(NSString *)text{
     NSArray *resultArry=[NSArray arrayWithObjects:@"零",@"一",@"二",@"三",@"四",@"五",@"六",@"七",@"八",@"九",@"十",@"百",@"千",@"万", nil];
