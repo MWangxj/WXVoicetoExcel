@@ -15,11 +15,14 @@
 #define CONNECTION_PASS "123456"
 #define CONNECTION_DB   "sys"
 
+#define SERVICEIP @"192.168.2.102"
+#define SERVICEPORT 55555
+
 #import "WXSpeechRecognizerView.h"
 #include "mysql.h"
 #include "GCDAsyncSocket.h"
 
-@interface WXSpeechRecognizerView()
+@interface WXSpeechRecognizerView()<GCDAsyncSocketDelegate>
 
 @property (nonatomic) MYSQL *connection;
 
@@ -33,6 +36,7 @@
     NSInteger _waitImageIndex;
     NSInteger _volumn;
     NSInteger _nowVolumn;
+    GCDAsyncSocket *socket;
     
     
 
@@ -174,10 +178,22 @@
             
             if (connection) {
                //连接上之后要做的事情
+                
             } else {
                 NSLog(@"fail to connect DB");
             }
         });
+        
+        socket = [[GCDAsyncSocket alloc]initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
+        //socket.delegate = self;
+        NSError *err = nil;
+        if(![socket connectToHost:SERVICEIP onPort:SERVICEPORT error:&err])
+        {
+            NSLog(@"*****%@*******",err.description);
+        }else
+        {
+            NSLog(@"ok");
+        }
 
         
 //        UIImageView *iv = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"bg_320x568.png"]];
@@ -271,6 +287,13 @@
     //label1.text = @"44444";
     
     return cell;
+}
+
+#pragma *********GCDAsyncSocketDelehate**********
+
+- (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port{
+
+    
 }
 
 - (void)clickedButton:(UIButton *)btn{

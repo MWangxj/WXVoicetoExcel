@@ -24,6 +24,7 @@
     UIButton *_reSetButton;
     UIButton *_testBTN;
     UITextField *_resultTF;
+    
 }
 @property (nonatomic, assign) id<WXSpeechRecognizerViewDelegate>delegate;
 
