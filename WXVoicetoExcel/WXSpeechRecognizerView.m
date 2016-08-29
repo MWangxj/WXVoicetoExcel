@@ -6,6 +6,7 @@
 //  Copyright (c) 2013年 Tencent Research. All rights reserved.
 //
 
+#define TAGOFFSET       100
 #define StateOfReady    0
 #define StateOfSpeaking 1
 #define StateOfWaiting  2
@@ -30,7 +31,7 @@
 
 @implementation WXSpeechRecognizerView
 {
-
+    NSInteger _tfIndex;
     NSInteger _state;
     NSTimer *_timer;
     NSInteger _waitImageIndex;
@@ -150,13 +151,15 @@
     _state = StateOfReady;
     [_timer invalidate];
     _timer = nil;
-    [_button setImage:[UIImage imageNamed:@"voice011.png"] forState:UIControlStateNormal];
-    
-    _reSetButton.enabled = NO;
-    [_reSetButton setImage:[UIImage imageNamed:@"reset001.png"] forState:UIControlStateNormal];
-        [self setText:text];
+//    [_button setImage:[UIImage imageNamed:@"voice011.png"] forState:UIControlStateNormal];
+//    
+//    _reSetButton.enabled = NO;
+//    [_reSetButton setImage:[UIImage imageNamed:@"reset001.png"] forState:UIControlStateNormal];
+        //[self setText:text];
     NSLog(@"*************|%@|*************",text);
-    _resultTF.text=text;
+    UITextField *tf=[self viewWithTag:_tfIndex];
+    tf.text=text;
+    //_resultTF.text=text;
 }
 
 /**
@@ -212,7 +215,7 @@
     if (self) {
         // Initialization code
         _state = StateOfReady;
-        
+        /*
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             self.connection = mysql_init(NULL);
             MYSQL *connection = mysql_real_connect(self.connection, CONNECTION_HOST, CONNECTION_USER, CONNECTION_PASS, CONNECTION_DB, 3306, NULL, 0);
@@ -235,7 +238,7 @@
         {
             NSLog(@"ok");
         }
-
+*/
         
 //        UIImageView *iv = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"bg_320x568.png"]];
 ////        iv.frame = CGRectMake(0, 0, 320, 568);
@@ -328,6 +331,7 @@
         
         _resultTF=[[UITextField alloc]initWithFrame:CGRectMake(cell.frame.size.width/5, 0, cell.frame.size.width/5*3, cell.frame.size.height)];
         _resultTF.enabled=false;
+        _resultTF.tag=indexPath.row+TAGOFFSET;
         _resultTF.textAlignment=NSTextAlignmentCenter;
         [cell.contentView addSubview:_resultTF];
         
@@ -337,6 +341,7 @@
         //testBTN.backgroundColor=[UIColor blueColor];
         [_testBTN setImage:[UIImage imageNamed:@"voice011.png"] forState:UIControlStateNormal];
         [_testBTN addTarget:self action:@selector(clickedButton:) forControlEvents:UIControlEventTouchUpInside];
+        _testBTN.tag=indexPath.row+TAGOFFSET;
         [cell.contentView addSubview:_testBTN];
         
     }
@@ -364,6 +369,7 @@
 
 
 - (void)clickedButton:(UIButton *)btn{
+    _tfIndex=btn.tag;
     if (btn == _reSetButton) {
         if (_state != StateOfReady) {
             _reSetButton.enabled = NO;
