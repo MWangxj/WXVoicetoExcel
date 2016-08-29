@@ -5,8 +5,8 @@
 //  Created by 宫亚东 on 13-12-26.
 //  Copyright (c) 2013年 Tencent Research. All rights reserved.
 //
-
 #define TAGOFFSET       100
+
 #define StateOfReady    0
 #define StateOfSpeaking 1
 #define StateOfWaiting  2
@@ -31,6 +31,7 @@
 
 @implementation WXSpeechRecognizerView
 {
+    NSMutableDictionary * _resultToSocketServer;
     NSInteger _tfIndex;
     NSInteger _state;
     NSTimer *_timer;
@@ -157,8 +158,11 @@
 //    [_reSetButton setImage:[UIImage imageNamed:@"reset001.png"] forState:UIControlStateNormal];
         //[self setText:text];
     NSLog(@"*************|%@|*************",text);
+    NSString* result= [self arabicNumberalsFromChineseNumberals:[text substringWithRange:NSMakeRange(0, text.length-1)]];
+    NSLog(@"*************|%@|*************",result);
     UITextField *tf=[self viewWithTag:_tfIndex];
-    tf.text=text;
+    tf.text=result;
+//    [_resultToSocketServer setObject:text forKey:[NSNumber numberWithInteger: _tfIndex]];
     //_resultTF.text=text;
 }
 
@@ -176,9 +180,9 @@
     _reSetButton.enabled = NO;
     [_reSetButton setImage:[UIImage imageNamed:@"reset001.png"] forState:UIControlStateNormal];
     if (self.resultAlignment == NSTextAlignmentLeft) {
-        [self setResultText:[NSString stringWithFormat:@"ErrorCode = %d", errorCode]];
+        [self setResultText:[NSString stringWithFormat:@"ErrorCode = %zi", errorCode]];
     } else {
-        [self setResultText:[NSString stringWithFormat:@"ErrorCode = %d\n点击重新开始", errorCode]];
+        [self setResultText:[NSString stringWithFormat:@"ErrorCode = /%zi\n点击重新开始", errorCode]];
     }
 }
 
@@ -215,6 +219,8 @@
     if (self) {
         // Initialization code
         _state = StateOfReady;
+        _resultToSocketServer=[[NSDictionary alloc]init];
+        
         /*
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             self.connection = mysql_init(NULL);
@@ -418,24 +424,123 @@
  *  @param text <#text description#>
  */
 
-- (void) resultStringtoDigit:(NSString *)text{
-    NSArray *resultArry=[NSArray arrayWithObjects:@"零",@"一",@"二",@"三",@"四",@"五",@"六",@"七",@"八",@"九",@"十",@"百",@"千",@"万", nil];
-    NSLog(@"*******************************");
-    NSLog(@"%ld",text.length);
+- (NSString *)arabicNumberalsFromChineseNumberals:(NSString *)arabic{
+    NSMutableDictionary * mdic =[[NSMutableDictionary alloc]init];
     
-    for (int i=0; i<text.length-1; i++) {
-        unichar temp=[text characterAtIndex:i];
-        for (NSString *str in resultArry) {
-            if(temp==[str characterAtIndex:0]){
-                NSLog(@"转化为数字是:－－－－－%lu－－－－/r/n",(unsigned long)[resultArry indexOfObject:str]);
-            }
-            else{
-                NSLog(@"你说的可能不是数字。");
+    [mdic setObject:[NSNumber numberWithInt:10000] forKey:@"万"];
+    [mdic setObject:[NSNumber numberWithInt:1000] forKey:@"千"];
+    [mdic setObject:[NSNumber numberWithInt:100] forKey:@"百"];
+    [mdic setObject:[NSNumber numberWithInt:10] forKey:@"十"];
+    
+    [mdic setObject:[NSNumber numberWithInt:9] forKey:@"九"];
+    [mdic setObject:[NSNumber numberWithInt:8] forKey:@"八"];
+    [mdic setObject:[NSNumber numberWithInt:7] forKey:@"七"];
+    [mdic setObject:[NSNumber numberWithInt:6] forKey:@"六"];
+    [mdic setObject:[NSNumber numberWithInt:5] forKey:@"五"];
+    [mdic setObject:[NSNumber numberWithInt:4] forKey:@"四"];
+    [mdic setObject:[NSNumber numberWithInt:3] forKey:@"三"];
+    [mdic setObject:[NSNumber numberWithInt:2] forKey:@"二"];
+    [mdic setObject:[NSNumber numberWithInt:2] forKey:@"两"];
+    [mdic setObject:[NSNumber numberWithInt:1] forKey:@"一"];
+    [mdic setObject:[NSNumber numberWithInt:0] forKey:@"零"];
+    
+    //    NSLog(@"%@",mdic);
+    
+    BOOL flag=YES;//yes表示正数，no表示负数
+    NSString * s=[arabic substringWithRange:NSMakeRange(0, 1)];
+    NSRange d=[arabic rangeOfString:@"点"];
+    if (d.length>0) {
+        NSMutableString *point=[[NSMutableString alloc]initWithString:@"."];
+        if([s isEqualToString:@"负"]){
+            flag=NO;
+        }
+        int i=0;
+        if(!flag){
+            i=1;
+        }
+        int sum=0;//和
+        int num[20];//保存单个汉字信息数组
+        for(int i=0;i<20;i++){//将其全部赋值为0
+            num[i]=0;
+        }
+        int k=0;//用来记录数据的个数
+        
+        //如果是负数，正常的数据从第二个汉字开始，否则从第一个开始
+        for(;i<d.location;i++){
+            NSString * key=[arabic substringWithRange:NSMakeRange(i, 1)];
+            int tmp=[[mdic valueForKey:key] intValue];
+            num[k++]=tmp;
+        }
+        
+        for(int j=d.location+1;j<[arabic length];j++){
+            NSString * key=[arabic substringWithRange:NSMakeRange(j, 1)];
+            int tmp=[[mdic valueForKey:key] intValue];
+            num[j]=tmp;
+            
+        }
+        
+        for (int j=d.location+1; j<[arabic length]; j++) {
+            [point appendString:[NSString stringWithFormat:@"%d",num[j]]];
+            
+        }
+        //将获得的所有数据进行拼装
+        for(int i=0;i<k;i++){
+            if(num[i]<10&&num[i+1]>=10){
+                sum+=num[i]*num[i+1];
+                i++;
+            }else{
+                sum+=num[i];
             }
         }
-    }
-    
-    
-}
+        NSMutableString * result=[[NSMutableString alloc]init];;
+        if(flag){//如果正数
+            NSLog(@"%d%@",sum,point);
+            result=[NSMutableString stringWithFormat:@"%d%@",sum,point];
+        }else{//如果负数
+            NSLog(@"-%d",sum);
+            result=[NSMutableString stringWithFormat:@"-%d%@",sum,point];
+        }
+        return result;
 
+    }else{
+        if([s isEqualToString:@"负"]){
+            flag=NO;
+        }
+        int i=0;
+        if(!flag){
+            i=1;
+        }
+        int sum=0;//和
+        int num[20];//保存单个汉字信息数组
+        for(int i=0;i<20;i++){//将其全部赋值为0
+            num[i]=0;
+        }
+        int k=0;//用来记录数据的个数
+        
+        //如果是负数，正常的数据从第二个汉字开始，否则从第一个开始
+        for(;i<[arabic length];i++){
+            NSString * key=[arabic substringWithRange:NSMakeRange(i, 1)];
+            int tmp=[[mdic valueForKey:key] intValue];
+            num[k++]=tmp;
+        }
+        //将获得的所有数据进行拼装
+        for(int i=0;i<k;i++){
+            if(num[i]<10&&num[i+1]>=10){
+                sum+=num[i]*num[i+1];
+                i++;
+            }else{
+                sum+=num[i];
+            }
+        }
+        NSMutableString * result=[[NSMutableString alloc]init];;
+        if(flag){//如果正数
+            NSLog(@"%d",sum);
+            result=[NSMutableString stringWithFormat:@"%d",sum];
+        }else{//如果负数
+            NSLog(@"-%d",sum);
+            result=[NSMutableString stringWithFormat:@"-%d",sum];
+        }
+        return result;
+    }
+    }
 @end
