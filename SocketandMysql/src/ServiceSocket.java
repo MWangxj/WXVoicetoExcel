@@ -4,6 +4,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
 
 public class ServiceSocket {
@@ -18,7 +20,7 @@ public class ServiceSocket {
     {  
         try   
         {  
-            ss = new ServerSocket(10000);  
+            ss = new ServerSocket(55555);  
               
             System.out.println("The server is waiting your input...");  
             socket = ss.accept();    
@@ -27,9 +29,13 @@ public class ServiceSocket {
             	if(ss!=null){
 	                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));  
 	                out = new PrintWriter(socket.getOutputStream(), true);  
-	                String line = in.readLine();  
-	                  
-	                System.out.println("you input is : " + line);  
+	                Stream<String> result=in.lines();
+	                Iterator iter=result.iterator();
+	                for(;iter.hasNext();){
+	                	String resultline=(String)iter.next();
+	                	System.out.println( resultline);  
+	                }
+	                String line = in.readLine();
 	                  
 	                //out.println("you input is :" + line);  
 	            	

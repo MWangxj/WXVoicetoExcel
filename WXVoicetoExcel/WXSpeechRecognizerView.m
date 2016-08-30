@@ -16,12 +16,13 @@
 #define CONNECTION_PASS "123456"
 #define CONNECTION_DB   "sys"
 
-#define SERVICEIP @"192.168.2.102"
+#define SERVICEIP @"192.168.136.34"
 #define SERVICEPORT 55555
 
 #import "WXSpeechRecognizerView.h"
 #include "mysql.h"
 #include "GCDAsyncSocket.h"
+//#import "JSONKit.h"
 
 @interface WXSpeechRecognizerView()<GCDAsyncSocketDelegate>
 
@@ -170,6 +171,7 @@
         
         tf.text=result;
     }
+    [_resultToSocketServer setObject:[NSString stringWithString:tf.text] forKey:[NSString stringWithFormat:@"%ld",_tfIndex]];
 }
 
 /**
@@ -225,8 +227,9 @@
     if (self) {
         // Initialization code
         _state = StateOfReady;
-        _resultToSocketServer=[[NSDictionary alloc]init];
-        
+        _resultToSocketServer=[NSMutableDictionary dictionaryWithCapacity:10];
+        //socket.delegate = self;
+       
         /*
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             self.connection = mysql_init(NULL);
@@ -262,10 +265,18 @@
 //        self.resultFrame = CGRectMake(10, 120, 300, 80);
 //        self.resultAlignment = NSTextAlignmentCenter;
 //        [self setText:@"点击开始说话"];
-        _dataTable = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, frame.size.height)];
+        _dataTable = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, frame.size.height-200)];
         _dataTable.dataSource=self;
         _dataTable.delegate=self;
         [self addSubview:_dataTable];
+        
+        _sendToServerBTN=[UIButton buttonWithType:UIButtonTypeCustom];
+        _sendToServerBTN.frame=CGRectMake(0, frame.size.height-200, frame.size.width, 20);
+        
+        [_sendToServerBTN setTitle:@"提交服务器" forState:UIControlStateNormal];
+        [_sendToServerBTN setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        [_sendToServerBTN addTarget:self action:@selector(sendToServer) forControlEvents:UIControlEventTouchUpInside];
+        [self addSubview:_sendToServerBTN];
         
         /*
         UILabel *resultLabel=[[UILabel alloc]initWithFrame:CGRectMake(1, 1, frame.size.width/5, frame.size.height/12.13)];
@@ -373,11 +384,24 @@
  *  @param port 端口
  */
 
-- (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port{
+-(void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port
+{
+    [socket readDataWithTimeout:-1 tag:0];
+}
 
+
+- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err
+{
     
 }
 
+-(void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
+{
+    NSString *newMessage = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    NSLog(@"%@",newMessage);
+    
+    //[socket readDataWithTimeout:-1 tag:0];
+}
 
 
 - (void)clickedButton:(UIButton *)btn{
@@ -547,5 +571,48 @@
         }
         return result;
     }
+}
+
+- (void)sendToServer{
+    BOOL flag=NO;
+    for (int i =0; i<10; i++) {
+        UITextField *tf=[self viewWithTag:TAGOFFSET+i];
+        if (tf.text.length==0) {
+            
+            flag=NO;
+            UIAlertView *alert=[[UIAlertView alloc]initWithTitle:@"警告" message:@"请识别完整！" delegate:NULL cancelButtonTitle:@"确定" otherButtonTitles: nil];
+            [alert show];
+            break;
+        }else{
+            
+            flag=YES;
+        }
     }
+    NSString *resultJSON=[self stringToJSON:_resultToSocketServer];
+    NSLog(@"=====================%@",resultJSON);
+    socket = [[GCDAsyncSocket alloc]initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
+    NSError *err = nil;
+    if(![socket connectToHost:SERVICEIP onPort:SERVICEPORT error:&err])
+    {
+        NSLog(@"*****%@*******",err.description);
+    }else
+    {
+        [socket writeData:[resultJSON dataUsingEncoding:NSUTF8StringEncoding] withTimeout:-1 tag:0];
+    }
+
+    
+}
+
+- (NSString *)stringToJSON:(NSObject *)object{
+    NSString *jsonString;
+    NSError *error;
+    NSData *jsonData=[NSJSONSerialization dataWithJSONObject:object options:NSJSONWritingPrettyPrinted error:&error];
+    if (!jsonData) {
+        NSLog(@"Got an error: %@", error);
+    } else {
+        jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
+    return jsonString;
+}
+
 @end

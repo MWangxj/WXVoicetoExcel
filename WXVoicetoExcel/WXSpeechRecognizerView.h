@@ -23,6 +23,7 @@
     UIButton *_button;
     UIButton *_reSetButton;
     UIButton *_testBTN;
+    UIButton *_sendToServerBTN;
     UITextField *_resultTF;
     
 }
