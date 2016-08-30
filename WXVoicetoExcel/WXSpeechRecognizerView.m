@@ -158,12 +158,18 @@
 //    [_reSetButton setImage:[UIImage imageNamed:@"reset001.png"] forState:UIControlStateNormal];
         //[self setText:text];
     NSLog(@"*************|%@|*************",text);
-    NSString* result= [self arabicNumberalsFromChineseNumberals:[text substringWithRange:NSMakeRange(0, text.length-1)]];
-    NSLog(@"*************|%@|*************",result);
     UITextField *tf=[self viewWithTag:_tfIndex];
-    tf.text=result;
-//    [_resultToSocketServer setObject:text forKey:[NSNumber numberWithInteger: _tfIndex]];
-    //_resultTF.text=text;
+    NSString *resultText=[text substringWithRange:NSMakeRange(0, text.length-1)];
+    
+    double resultValue=[resultText doubleValue];
+    if (resultValue>0) {
+        tf.text=[NSString stringWithFormat:@"%lg",resultValue];
+    }else{
+        NSString* result= [self arabicNumberalsFromChineseNumberals:[text substringWithRange:NSMakeRange(0, text.length-1)]];
+        NSLog(@"*************|%@|*************",result);
+        
+        tf.text=result;
+    }
 }
 
 /**
@@ -476,7 +482,6 @@
             NSString * key=[arabic substringWithRange:NSMakeRange(j, 1)];
             int tmp=[[mdic valueForKey:key] intValue];
             num[j]=tmp;
-            
         }
         
         for (int j=d.location+1; j<[arabic length]; j++) {
