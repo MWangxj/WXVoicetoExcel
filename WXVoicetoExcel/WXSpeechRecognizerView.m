@@ -40,8 +40,8 @@
     NSInteger _volumn;
     NSInteger _nowVolumn;
     GCDAsyncSocket *socket;
-    
-    
+    BOOL _isConneted;
+    BOOL _firstConnect;
 
 }
 @synthesize delegate = _delegate;
@@ -229,7 +229,10 @@
         _state = StateOfReady;
         _resultToSocketServer=[NSMutableDictionary dictionaryWithCapacity:10];
         //socket.delegate = self;
-       
+//        socket = [[GCDAsyncSocket alloc]initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
+        
+      
+        
         /*
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             self.connection = mysql_init(NULL);
@@ -271,12 +274,13 @@
         [self addSubview:_dataTable];
         
         _sendToServerBTN=[UIButton buttonWithType:UIButtonTypeCustom];
-        _sendToServerBTN.frame=CGRectMake(0, frame.size.height-200, frame.size.width, 20);
+        _sendToServerBTN.frame=CGRectMake(0, frame.size.height-100, frame.size.width, 20);
         
-        [_sendToServerBTN setTitle:@"提交服务器" forState:UIControlStateNormal];
+        [_sendToServerBTN setTitle:@"连接服务器" forState:UIControlStateNormal];
         [_sendToServerBTN setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-        [_sendToServerBTN addTarget:self action:@selector(sendToServer) forControlEvents:UIControlEventTouchUpInside];
+        [_sendToServerBTN addTarget:self action:@selector(switchServer) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_sendToServerBTN];
+        _firstConnect=YES;
         
         /*
         UILabel *resultLabel=[[UILabel alloc]initWithFrame:CGRectMake(1, 1, frame.size.width/5, frame.size.height/12.13)];
@@ -386,7 +390,7 @@
 
 -(void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port
 {
-    [socket readDataWithTimeout:-1 tag:0];
+    [sock readDataWithTimeout:-1 tag:0];
 }
 
 
@@ -573,6 +577,24 @@
     }
 }
 
+- (void)switchServer{
+
+    if (_firstConnect) {
+        [self connectToServer];
+    }else{
+    
+        [self sendToServer];
+    }
+}
+
+- (void)connectToServer{
+    _firstConnect=NO;
+    socket=[[GCDAsyncSocket alloc]initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
+    NSError* err = nil;
+    _isConneted=[socket connectToHost:SERVICEIP onPort:SERVICEPORT error:&err];
+    [_sendToServerBTN setTitle:@"发送数据" forState:UIControlStateNormal];
+}
+
 - (void)sendToServer{
     BOOL flag=NO;
     for (int i =0; i<10; i++) {
@@ -590,17 +612,15 @@
     }
     NSString *resultJSON=[self stringToJSON:_resultToSocketServer];
     NSLog(@"=====================%@",resultJSON);
-    socket = [[GCDAsyncSocket alloc]initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
-    NSError *err = nil;
-    if(![socket connectToHost:SERVICEIP onPort:SERVICEPORT error:&err])
+    
+    if(!_isConneted)
     {
-        NSLog(@"*****%@*******",err.description);
+        NSLog(@"*****连接错误*******");
     }else
     {
         [socket writeData:[resultJSON dataUsingEncoding:NSUTF8StringEncoding] withTimeout:-1 tag:0];
+        [socket readDataWithTimeout:-1 tag:0];
     }
-
-    
 }
 
 - (NSString *)stringToJSON:(NSObject *)object{
