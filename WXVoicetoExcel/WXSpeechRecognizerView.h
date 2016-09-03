@@ -1,17 +1,10 @@
 //
 //  WXSpeechRecognizerView.h
-//  WXVoiceSDKDemo
+//  WXVoicetoExcel
 //
-//  Created by 宫亚东 on 13-12-26.
-//  Copyright (c) 2013年 Tencent Research. All rights reserved.
+//  Created by wangxianjin on 16/8/25.
+//  Copyright © 2016年 wangxianjin. All rights reserved.
 //
-//@protocol WXSpeechRecognizerViewDelegate <NSObject>
-//
-//- (BOOL)start;
-//- (void)finishRecorder;
-//- (void)cancel;
-//
-//@end
 
 #import <UIKit/UIKit.h>
 #import "WXSpeechRecognizerViewDelegate.h"

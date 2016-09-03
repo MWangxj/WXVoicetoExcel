@@ -1,9 +1,9 @@
 //
 //  WXSpeechRecognizerView.m
-//  WXVoiceSDKDemo
+//  WXVoicetoExcel
 //
-//  Created by 宫亚东 on 13-12-26.
-//  Copyright (c) 2013年 Tencent Research. All rights reserved.
+//  Created by wangxianjin on 16/8/25.
+//  Copyright © 2016年 wangxianjin. All rights reserved.
 //
 #define TAGOFFSET       100
 
@@ -164,7 +164,7 @@
     
     double resultValue=[resultText doubleValue];
     if (resultValue>0) {
-        tf.text=[NSString stringWithFormat:@"%lg",resultValue];
+        tf.text=resultText;
     }else{
         NSString* result= [self arabicNumberalsFromChineseNumberals:[text substringWithRange:NSMakeRange(0, text.length-1)]];
         NSLog(@"*************|%@|*************",result);
@@ -432,6 +432,7 @@
             _volumn = 3;
             _reSetButton.enabled = YES;
             [_reSetButton setImage:[UIImage imageNamed:@"reset002.png"] forState:UIControlStateNormal];
+            [btn setImage:[UIImage imageNamed:@"voice001.png"] forState:UIControlStateNormal];
             [self setText:@"语音已开启，请说话..."];
             if (_timer) {
                 [_timer invalidate];
@@ -439,6 +440,7 @@
             _timer = [NSTimer scheduledTimerWithTimeInterval:0.02 target:self selector:@selector(timeUp) userInfo:nil repeats:YES];
         }
     } else if (_state == StateOfSpeaking) {
+         [btn setImage:[UIImage imageNamed:@"voice011.png"] forState:UIControlStateNormal];
         [_delegate finishRecorder];
     }
     
